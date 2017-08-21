@@ -31,4 +31,8 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, WeiGuangActivity.class);
         startActivity(intent);
     }
+    public void toPrint(View view) {
+        Intent intent = new Intent(this, PrintActivity.class);
+        startActivity(intent);
+    }
 }

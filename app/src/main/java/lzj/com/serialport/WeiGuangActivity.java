@@ -32,6 +32,8 @@ public class WeiGuangActivity extends AppCompatActivity implements View.OnClickL
         closeLight= (Button) findViewById(R.id.closeLight);
         closeLight.setOnClickListener(this);
         saoResult= (TextView) findViewById(R.id.saoResult);
+        SerialHelper.serialManager.open("/dev/ttyS2");
+
         SerialHelper.serialManager.setSaoMaoListenre(new ReciveSaoResutListener() {
             @Override
             public void ResutJF(String resut) {
@@ -61,6 +63,7 @@ public class WeiGuangActivity extends AppCompatActivity implements View.OnClickL
     protected void onStop() {
         super.onStop();
         SerialHelper.serialManager.setSaoMaoListenre(null);
+        SerialHelper.serialManager.close();
     }
 
     @Override

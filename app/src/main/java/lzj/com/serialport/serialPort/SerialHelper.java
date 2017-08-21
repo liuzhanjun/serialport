@@ -1,5 +1,7 @@
 package lzj.com.serialport.serialPort;
 
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 
 import com.printsdk.cmd.PrintCmd;
@@ -33,6 +35,7 @@ public enum  SerialHelper {
     private boolean _isOpen;
     private  ReciveSaoResutListener saoMaoListenre;
     private ReadThread read;
+    private boolean isReading=true;
 
 
     /**
@@ -61,9 +64,13 @@ public enum  SerialHelper {
         return _isOpen;
     }
     public void close(){
+
         if (mSerialPort != null) {
             mSerialPort.close();
         }
+
+        read.interrupt();
+        read=null;
     }
 
 
@@ -155,7 +162,11 @@ public enum  SerialHelper {
     String tou = "55AA30002000";
     StringBuilder getAllOx = new StringBuilder();
 
-    public  class ReadThread extends Thread{
+    public  class ReadThread extends HandlerThread{
+        public ReadThread() {
+            super("ReadThread");
+        }
+
         @Override
         public void run() {
             while (!isInterrupted()) {
@@ -302,6 +313,135 @@ public enum  SerialHelper {
 
             sendHex(t);
         }
+    }
+
+
+    /**
+     * 行间距 设置行间距 (SetLinespace)
+     * 设置 汉字 放大(  SetSizechinese)
+     * 设置 设置 字符 放大( ( SetSize char) )
+     * 置字体加粗 设置字体加粗(SetBold)
+     * 设置 设置 字符对齐(SetAlignment)
+     */
+
+
+    public void sendMessageBig(String str) {
+        send(PrintCmd.SetAlignment(1));//对齐类型，0 左对齐 、1 居中对齐、2 右对齐
+        send(PrintCmd.SetLinespace(96));//小字48，大字96
+        send(PrintCmd.SetSizechar(1, 1, 0, 0));//字符两倍
+        send(PrintCmd.SetSizechinese(1, 1, 0, 0));//中文两倍
+        send(PrintCmd.PrintString(str, 0));
+    }
+
+    public void sendMessageSmall(String str, int type) {
+        send(PrintCmd.SetSizechar(0, 0, 0, 0));//字符1倍
+        send(PrintCmd.SetSizechinese(0, 0, 0, 0));//中文1倍
+        send(PrintCmd.SetLinespace(48));//小字48，大字96
+        send(PrintCmd.SetAlignment(type));//对齐类型，0 左对齐 、1 居中对齐、2 右对齐
+        send(PrintCmd.PrintString(str, 0));
+    }
+
+    public void sendMessageSmallB(String str, int type) {
+        send(PrintCmd.SetBold(1));//1，加粗，0，不加粗
+        send(PrintCmd.SetSizechar(0, 0, 0, 0));//字符1倍
+        send(PrintCmd.SetSizechinese(0, 0, 0, 0));//中文1倍
+        send(PrintCmd.SetLinespace(48));//小字48，大字96
+        send(PrintCmd.SetAlignment(type));//对齐类型，0 左对齐 、1 居中对齐、2 右对齐
+        send(PrintCmd.PrintString(str, 0));
+    }
+
+
+    public String dataStringSet2(String food_name, String food_num, String food_price, int num) {
+        String result = null;
+        StringBuffer sb = new StringBuffer();
+        try {
+
+            char[] name_arr = food_name.toCharArray();//字符數
+            Log.d("abcd", "name_arr: " + name_arr.length);
+            char[] num_arr = food_num.toCharArray();
+            Log.d("abcd", "num_arr: " + num_arr.length);
+            char[] price_arr = food_price.toCharArray();
+
+            for (int i = 0; i < num; i++) {
+                if (i == 0) {
+                    if (name_arr.length > 9) {
+                        sb.append(name_arr[0]);
+                        sb.append(name_arr[1]);
+                        sb.append(name_arr[2]);
+                        sb.append(name_arr[3]);
+                        sb.append(name_arr[4]);
+                        sb.append(name_arr[5]);
+                        sb.append(name_arr[6]);
+                        sb.append(name_arr[7]);
+                        sb.append(".");
+                        sb.append(".");
+                        sb.append(name_arr[name_arr.length - 1]);
+                        int znum = 0;
+                        char[] chars = sb.toString().toCharArray();
+                        for (int j = 0; j < chars.length; j++) {
+                            if (isZhongWen(chars[j])) {
+                                znum++;//中文個數
+                            }
+                        }
+                        Log.d("dataStringSet2", "znum: " + znum);
+                        for (int j = 0; j < 9 - znum; j++) {
+                            //一個中文占2位，數字占1位
+                            sb.append(" ");//40-4*znum =
+                        }
+//                        sb.append(" ");
+                        i = 20;
+                    } else {
+                        int zhongwen = 0;
+                        for (int j = 0; j < name_arr.length; j++) {
+                            sb.append(name_arr[j]);
+                            if (isZhongWen(name_arr[j])) {
+                                zhongwen++;
+                            }
+                        }
+                        i = zhongwen * 2 + name_arr.length - zhongwen;
+                        Log.d("dataStringSet2", "dataStringSet2: i--->" + i);
+//                        sb.append(" ");
+
+                    }
+                } else if (i == 22) {
+                    for (int j = 0; j < num_arr.length; j++) {
+                        sb.append(num_arr[j]);
+                        i++;
+                    }
+                } else if (i == 26) {
+                    for (int j = 0; j < price_arr.length; j++) {
+                        sb.append(price_arr[j]);
+                        i++;
+                    }
+                } else {
+                    sb.append(" ");
+                }
+            }
+            result = sb.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public boolean isZhongWen(char name) {
+        if ((name >= 0x4e00) && (name <= 0x9fbb)) {
+            return true;
+        }
+        return false;
+    }
+
+    // 打印二维码
+    private void PrintQRCode(String url) throws IOException {
+        send(PrintCmd.PrintQrcode(url, 25, 7, 1));
+    }
+
+
+    // 走纸换行，再切纸，清理缓存
+    public void PrintFeedCutpaper(int iLine) throws IOException {
+       send(PrintCmd.PrintFeedline(iLine));
+       send(PrintCmd.PrintCutpaper(1));
+       send(PrintCmd.SetClean());
     }
 
 }

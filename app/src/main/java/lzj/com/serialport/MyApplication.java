@@ -13,15 +13,13 @@ import lzj.com.serialport.serialPort.SerialHelper;
 
 public class MyApplication  extends Application{
 
-    private SerialHelper helper;
     private String TAG="MyApplication";
 
     @Override
     public void onCreate() {
         super.onCreate();
         LeakCanary.install(this);
-        helper = SerialHelper.serialManager.getInstener();
-        boolean isopen = helper.open("/dev/ttyS2");
-        Log.i(TAG, "onCreate: isopen=" + isopen);
+        SerialHelper.serialManager.getInstener();
+
     }
 }
