@@ -7,8 +7,13 @@ import android.view.View;
 
 import java.io.IOException;
 
+import lzj.com.serialport.escpos.EscPosBuilder;
+import lzj.com.serialport.escpos.command.Align;
+import lzj.com.serialport.escpos.command.Cut;
+import lzj.com.serialport.escpos.command.Font;
 import lzj.com.serialport.serialPort.ReciveSaoResutListener;
 import lzj.com.serialport.serialPort.SerialHelper;
+import lzj.com.serialport.utils.EscPos;
 
 public class PrintActivity extends AppCompatActivity {
 
@@ -43,12 +48,44 @@ public class PrintActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                SerialHelper.serialManager.sendMessageBig("bsss");
+                EscPosBuilder escPos = new EscPosBuilder();
+                byte[] data;
                 try {
-                    SerialHelper.serialManager.PrintFeedCutpaper(2);
+                     data = escPos.initialize()
+                             .RowSpac(100)
+                            .font(Font.REGULAR)
+                            .align(Align.CENTER)
+                            .text("龙龙食府-花城店")
+                            .nextLine()
+                            .font(Font.REGULAR)
+                            .align(Align.CENTER)
+                            .text("losebbcde")
+                             .nextLine()
+
+                            .font(Font.DWDH)
+                            .align(Align.CENTER)
+                            .text("456789红")
+                             .nextLine()
+                             .font(Font.REGULAR)
+                             .align(Align.CENTER)
+                             .text("22222222222222")
+                             .feed(15)
+                            .cut(Cut.FULL)
+                            .getBytes();
+
+                    SerialHelper.serialManager.send(data);
+                    escPos.reset();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+//                SerialHelper.serialManager.sendMessageBig("123456789123456789红");
+//                try {
+//                    SerialHelper.serialManager.PrintFeedCutpaper(5);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+
+
             }
         }).start();
 

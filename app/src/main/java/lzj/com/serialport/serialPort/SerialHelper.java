@@ -51,7 +51,7 @@ public enum  SerialHelper {
 
     public boolean open(String devicePath){
         try {
-            mSerialPort=new SerialPort(new File(devicePath),9600,2);
+            mSerialPort=new SerialPort(new File(devicePath),9600,0);
             mOutputStream=mSerialPort.getOutputStream();
             mInputStream=mSerialPort.getInputStream();
             read=new ReadThread();
